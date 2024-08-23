@@ -14,4 +14,7 @@ ENV VLLM_TARGET_DEVICE="tpu"
 RUN cd /workspace/vllm && python3 -m pip install -r requirements-tpu.txt
 RUN cd /workspace/vllm && python3 setup.py develop
 
-CMD ["/bin/bash"]
+ENV VLLM_USAGE_SOURCE production-docker-image
+
+# CMD ["/bin/bash"]
+ENTRYPOINT ["python3", "-m", "vllm.entrypoints.openai.api_server"]
