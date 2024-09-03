@@ -29,3 +29,6 @@ else
   echo "Error: Neither MODEL_PATH nor HF_PATH is set" >&2
   exit 1
 fi
+
+# Execute the command
+exec $CMD
