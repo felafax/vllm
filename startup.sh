@@ -18,7 +18,7 @@ fi
 if [ -n "$MODEL_PATH" ] && [ -d "/workspace/felafax-storage/$MODEL_PATH" ]; then
   target_dir="/workspace/$MODEL_PATH"
   mkdir -p "$target_dir"
-  time cp -R "/workspace/felafax-storage/$MODEL_PATH"/ "$target_dir"
+  time cp -R "/workspace/felafax-storage/$MODEL_PATH"/* "$target_dir"
   echo "Using local model from $MODEL_PATH"
   CMD="python3 -m vllm.entrypoints.openai.api_server $target_dir --port $VLLM_PORT --dtype auto"
 elif [ -n "$HF_PATH" ]; then
