@@ -24,6 +24,7 @@ ENV MODEL_PATH=""
 ENV HF_PATH=""
 ENV HF_TOKEN=""
 ENV VLLM_PORT=8000
+ENV CLOUD_STORAGE_BUCKET="felafax-storage"
 
 
 # Install gcsfuse
