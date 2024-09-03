@@ -14,11 +14,16 @@ ENV VLLM_TARGET_DEVICE="tpu"
 RUN cd /workspace/vllm && python3 -m pip install -r requirements-tpu.txt
 RUN cd /workspace/vllm && python3 setup.py develop
 
-ENV VLLM_USAGE_SOURCE production-docker-image
+
+ENV VLLM_USAGE_SOURCE "production-docker-image"
 # user id
 ENV UID=0
 # mount entire storage
 ENV MOUNT_GCSFUSE=1
+ENV MODEL_PATH=""
+ENV HF_PATH=""
+ENV HF_TOKEN=""
+ENV VLLM_PORT=8000
 
 
 # Install gcsfuse
@@ -40,7 +45,7 @@ RUN chmod 600 /home/.gcloud_key/storage_key.json
 
 # Authenticate gcloud
 RUN gcloud auth activate-service-account --key-file=/home/.gcloud_key/storage_key.json
-RUN mkdir "/home/felafax-storage/"
+RUN mkdir "/workspace/felafax-storage/"
 
 
 # Create startup script
