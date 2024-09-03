@@ -20,7 +20,7 @@ if [ -n "$MODEL_PATH" ] && [ -d "/workspace/felafax-storage/$MODEL_PATH" ]; then
   mkdir -p "$target_dir"
   time cp -R "/workspace/felafax-storage/$MODEL_PATH"/* "$target_dir"
   echo "Using local model from $MODEL_PATH"
-  CMD="python3 -m vllm.entrypoints.openai.api_server $target_dir --port $VLLM_PORT --dtype auto"
+  CMD="python3 -m vllm.entrypoints.openai.api_server --model $target_dir --port $VLLM_PORT --dtype auto"
 elif [ -n "$HF_PATH" ]; then
   echo "Using Hugging Face model from $HF_PATH"
   export HUGGING_FACE_HUB_TOKEN=$HF_TOKEN
