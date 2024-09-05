@@ -41,20 +41,20 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.
   apt-get update && apt-get install -y google-cloud-cli
 
 # gcloud storage key
-RUN mkdir /home/.gcloud_key
-COPY storage_key.json /home/.gcloud_key/storage_key.json
-RUN chmod 600 /home/.gcloud_key/storage_key.json
+RUN mkdir /workspace/.gcloud_key
+COPY storage_key.json /workspace/.gcloud_key/storage_key.json
+RUN chmod 600 /workspace/.gcloud_key/storage_key.json
 
 # Authenticate gcloud
-RUN gcloud auth activate-service-account --key-file=/home/.gcloud_key/storage_key.json
-RUN mkdir "/workspace/felafax-storage/"
+RUN gcloud auth activate-service-account --key-file=/workspace/.gcloud_key/storage_key.json
+# RUN mkdir "/workspace/felafax-storage/"
 
 
 # Create startup script
-RUN mkdir /scripts
-COPY startup.sh /scripts/startup.sh
-RUN chmod +x /scripts/startup.sh
+RUN mkdir /workspace/.scripts
+COPY startup.sh /workspace/.scripts/startup.sh
+RUN chmod +x /workspace/.scripts/startup.sh
 
 # Command to run when the container starts
-CMD ["/scripts/startup.sh"]
+CMD ["/workspace/.scripts/startup.sh"]
 
