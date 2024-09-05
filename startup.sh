@@ -1,9 +1,16 @@
 #!/bin/bash
 set -eo pipefail
 
-# Define the storage directory as a variable
-STORAGE_DIR="${STORAGE_DIR_PATH:-/workspace/storage}"
-echo "Storage directory: $STORAGE_DIR"
+# Define the base storage directory path
+STORAGE_DIR_BASE="${STORAGE_DIR_PATH:-/workspace}"
+
+# Define the primary and fallback storage directory names
+PRIMARY_DIR_NAME="storage"
+FALLBACK_DIR_NAME="storage-fallback"
+
+# Set the initial storage directory
+STORAGE_DIR="$STORAGE_DIR_BASE/$PRIMARY_DIR_NAME"
+echo "Initial storage directory: $STORAGE_DIR"
 
 # create dir
 mkdir -p "$STORAGE_DIR"
@@ -12,19 +19,22 @@ mkdir -p "$STORAGE_DIR"
 echo "Mounting entire bucket"
 mount -t gcsfuse -o implicit_dirs $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
 
+# Function to count files and directories
+count_items() {
+  find "$1" -mindepth 1 -maxdepth 1 | wc -l
+}
+
 # Check if the mounted directory is empty
-if [ -z "$(ls -A "$STORAGE_DIR")" ]; then
+if [ "$(count_items "$STORAGE_DIR")" -eq 0 ]; then
   echo "Mounted directory is empty. Retrying mount..."
   fusermount -u "$STORAGE_DIR"
-
-  # retry
-  STORAGE_DIR="/workspace/storage-2"
+  # retry with fallback directory
+  STORAGE_DIR="$STORAGE_DIR_BASE/$FALLBACK_DIR_NAME"
+  echo "Retrying with fallback storage directory: $STORAGE_DIR"
   mkdir -p "$STORAGE_DIR"
-
   gcsfuse --implicit-dirs $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
-
   # Check again after retry
-  if [ -z "$(ls -A "$STORAGE_DIR")" ]; then
+  if [ "$(count_items "$STORAGE_DIR")" -eq 0 ]; then
     echo "Error: Failed to mount the bucket. Directory is still empty after retry." >&2
     exit 1
   fi
@@ -33,7 +43,7 @@ fi
 # run vLLM from local model
 if [ -n "$MODEL_PATH" ] && [ -d "$STORAGE_DIR/$MODEL_PATH" ]; then
   # local model path
-  target_dir="/workspace/$MODEL_PATH"
+  target_dir="$STORAGE_DIR_BASE/$MODEL_PATH"
   mkdir -p "$target_dir"
   # copy the model locally from gcsfuse
   time cp -R "$STORAGE_DIR/$MODEL_PATH"/* "$target_dir"

@@ -26,7 +26,8 @@ ENV HF_TOKEN=""
 ENV VLLM_PORT=8000
 ENV CLOUD_STORAGE_BUCKET="felafax-storage"
 ENV API_TOKEN=""
-ENV STORAGE_DIR_PATH="/workspace/storage"
+# base of storage
+ENV STORAGE_DIR_PATH="/workspace/"
 
 
 # Install gcsfuse
