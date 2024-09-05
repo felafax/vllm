@@ -9,7 +9,7 @@ mkdir -p "$STORAGE_DIR"
 
 # mount gcsfuse
 echo "Mounting entire bucket"
-sudo mount -t gcsfuse -o implicit_dirs $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
+mount -t gcsfuse -o implicit_dirs $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
 
 # Check if the mounted directory is empty
 if [ -z "$(ls -A "$STORAGE_DIR")" ]; then
