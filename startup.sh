@@ -2,7 +2,8 @@
 set -eo pipefail
 
 # Define the storage directory as a variable
-STORAGE_DIR="/workspace/storage"
+STORAGE_DIR="${STORAGE_DIR_PATH:-/workspace/storage}"
+echo "Storage directory: $STORAGE_DIR"
 
 # create dir
 mkdir -p "$STORAGE_DIR"
