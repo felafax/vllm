@@ -7,35 +7,39 @@ count_items() {
 
 # Define the base storage directory path
 STORAGE_DIR_BASE="${STORAGE_DIR_PATH:-/workspace}"
-MODEL_DIR_NAME="MODEL"
+GCS_MOUNT_DIR="gcs_mount"
+LOCAL_MODEL_DIR="MODEL"
 
 # Set the storage and model directories
-STORAGE_DIR="$STORAGE_DIR_BASE/$MODEL_DIR_NAME"
-echo "Storage directory: $STORAGE_DIR"
+GCS_MOUNT_PATH="$STORAGE_DIR_BASE/$GCS_MOUNT_DIR"
+LOCAL_MODEL_PATH="$STORAGE_DIR_BASE/$LOCAL_MODEL_DIR"
 
-# Create storage directory
-mkdir -p "$STORAGE_DIR"
+echo "GCS mount path: $GCS_MOUNT_PATH"
+echo "Local model path: $LOCAL_MODEL_PATH"
 
 if [ -n "$MODEL_PATH" ]; then
+  # Create GCS mount directory
+  mkdir -p "$GCS_MOUNT_PATH"
+
   echo "Mounting GCS bucket"
-  gcsfuse --debug_fuse --debug_fs --debug_gcs --debug_http --implicit-dirs --only-dir "$MODEL_PATH" "$CLOUD_STORAGE_BUCKET" "$STORAGE_DIR"
+  gcsfuse --debug_fuse --debug_fs --debug_gcs --debug_http --implicit-dirs --only-dir "$MODEL_PATH" "$CLOUD_STORAGE_BUCKET" "$GCS_MOUNT_PATH"
 
   # Check if the mounted directory is not empty
-  if [ "$(count_items "$STORAGE_DIR")" -ne 0 ]; then
+  if [ "$(count_items "$GCS_MOUNT_PATH")" -ne 0 ]; then
     # Create a local model directory
-    LOCAL_MODEL_DIR="$STORAGE_DIR_BASE/MODEL"
-    mkdir -p "$LOCAL_MODEL_DIR"
+    mkdir -p "$LOCAL_MODEL_PATH"
 
-    echo "Copying model files from $STORAGE_DIR to $LOCAL_MODEL_DIR"
-    time cp -R "$STORAGE_DIR"/* "$LOCAL_MODEL_DIR"
+    echo "Copying model files from $GCS_MOUNT_PATH to $LOCAL_MODEL_PATH"
+    time rsync -av --delete "$GCS_MOUNT_PATH/" "$LOCAL_MODEL_PATH/"
 
     echo "Unmounting GCS bucket"
-    fusermount -u "$STORAGE_DIR"
+    fusermount -u "$GCS_MOUNT_PATH"
 
-    echo "Starting vLLM server on $VLLM_PORT using local model from $LOCAL_MODEL_DIR"
-    CMD="python3 -m vllm.entrypoints.openai.api_server --model $LOCAL_MODEL_DIR --port $VLLM_PORT --dtype auto"
+    echo "Starting vLLM server on $VLLM_PORT using local model from $LOCAL_MODEL_PATH"
+    CMD="python3 -m vllm.entrypoints.openai.api_server --model $LOCAL_MODEL_PATH --port $VLLM_PORT --dtype auto"
   else
     echo "Error: Mounted directory is empty" >&2
+    fusermount -u "$GCS_MOUNT_PATH"
     exit 1
   fi
 elif [ -n "$HF_PATH" ]; then
