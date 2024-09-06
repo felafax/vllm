@@ -17,7 +17,8 @@ mkdir -p "$STORAGE_DIR"
 
 # mount gcsfuse
 echo "Mounting entire bucket"
-mount -t gcsfuse -o implicit_dirs $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
+# mount -t gcsfuse -o implicit_dirs --only-dir $MODEL_PATH $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
+gcsfuse --implicit-dirs --only-dir $MODEL_PATH felafax-storage "$WORKSPACE_DIR/felafax-storage/"
 
 # Function to count files and directories
 count_items() {
@@ -32,7 +33,9 @@ if [ "$(count_items "$STORAGE_DIR")" -eq 0 ]; then
   STORAGE_DIR="$STORAGE_DIR_BASE/$FALLBACK_DIR_NAME"
   echo "Retrying with fallback storage directory: $STORAGE_DIR"
   mkdir -p "$STORAGE_DIR"
-  gcsfuse --implicit-dirs $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
+  # gcsfuse --implicit-dirs $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
+  gcsfuse $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
+  mkdir -p "$STORAGE_DIR/$MODEL_PATH"
   # Check again after retry
   if [ "$(count_items "$STORAGE_DIR")" -eq 0 ]; then
     echo "Error: Failed to mount the bucket. Directory is still empty after retry." >&2
