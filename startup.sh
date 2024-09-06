@@ -18,7 +18,7 @@ mkdir -p "$STORAGE_DIR"
 # mount gcsfuse
 echo "Mounting entire bucket"
 # mount -t gcsfuse -o implicit_dirs --only-dir $MODEL_PATH $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
-gcsfuse --implicit-dirs --only-dir $MODEL_PATH felafax-storage "$WORKSPACE_DIR/felafax-storage/"
+gcsfuse --foreground --debug_fuse --debug_fs --debug_gcs --debug_http --implicit-dirs --only-dir $MODEL_PATH $CLOUD_STORAGE_BUCKET $STORAGE_DIR
 
 # Function to count files and directories
 count_items() {
@@ -35,6 +35,7 @@ if [ "$(count_items "$STORAGE_DIR")" -eq 0 ]; then
   mkdir -p "$STORAGE_DIR"
   # gcsfuse --implicit-dirs $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
   gcsfuse $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
+  # mount -t gcsfuse -o implicit_dirs --only-dir $MODEL_PATH $CLOUD_STORAGE_BUCKET "$STORAGE_DIR"
   mkdir -p "$STORAGE_DIR/$MODEL_PATH"
   # Check again after retry
   if [ "$(count_items "$STORAGE_DIR")" -eq 0 ]; then
