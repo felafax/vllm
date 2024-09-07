@@ -22,7 +22,6 @@ if [ -n "$MODEL_PATH" ]; then
   mkdir -p "$GCS_MOUNT_PATH"
   echo "Mounting GCS bucket"
   gcsfuse --debug_fuse --debug_fs --debug_gcs --debug_http --implicit-dirs --only-dir "$MODEL_PATH" "$CLOUD_STORAGE_BUCKET" "$GCS_MOUNT_PATH"
-
   # Check if the mounted directory is not empty
   if [ "$(count_items "$GCS_MOUNT_PATH")" -ne 0 ]; then
     # Create a local model directory
@@ -31,7 +30,7 @@ if [ -n "$MODEL_PATH" ]; then
     time rsync -av --delete "$GCS_MOUNT_PATH/" "$LOCAL_MODEL_PATH/"
     echo "Unmounting GCS bucket"
     fusermount -u "$GCS_MOUNT_PATH"
-    echo "Starting vLLM server on $VLLM_PORT using local model from $LOCAL_MODEL_PATH"
+    echo "Using local model from $LOCAL_MODEL_PATH"
     MODEL="$LOCAL_MODEL_PATH"
   else
     echo "Error: Mounted directory is empty" >&2
@@ -41,15 +40,45 @@ if [ -n "$MODEL_PATH" ]; then
 elif [ -n "$HF_PATH" ]; then
   echo "Using Hugging Face model from $HF_PATH"
   export HUGGING_FACE_HUB_TOKEN=$HF_TOKEN
-  echo "Starting vLLM server on $VLLM_PORT using model $HF_PATH"
   MODEL="$HF_PATH"
 else
   echo "Error: Neither MODEL_PATH nor HF_PATH is set" >&2
   exit 1
 fi
 
+# Function to check if a port is available
+is_port_available() {
+  ! lsof -i:$1 >/dev/null 2>&1
+}
+
+# Find an available port
+find_available_port() {
+  local port=8000
+  while [ $port -le 8010 ]; do
+    if is_port_available $port; then
+      echo $port
+      return 0
+    fi
+    ((port++))
+  done
+  echo "No available ports found between 8000 and 8010" >&2
+  return 1
+}
+
+# Print all ports being used
+echo "Ports currently in use:"
+lsof -i -P -n | grep LISTEN
+
+# Find an available port
+VLLM_PORT=$(find_available_port)
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
+echo "Using port: $VLLM_PORT"
+
 # Construct the vllm serve command
-CMD="vllm serve $MODEL --port $VLLM_PORT --host 0.0.0.0"
+CMD="python3 -m vllm.entrypoints.openai.api_server --model $MODEL --port $VLLM_PORT --host 0.0.0.0 --dtype auto"
 
 # Add chat template if provided
 if [ -n "$CHAT_TEMPLATE" ]; then
