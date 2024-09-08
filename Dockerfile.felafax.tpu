@@ -1,0 +1,49 @@
+ARG NIGHTLY_DATE="20240808"
+ARG BASE_IMAGE="us-central1-docker.pkg.dev/tpu-pytorch-releases/docker/xla:nightly_3.10_tpuvm_$NIGHTLY_DATE"
+
+FROM $BASE_IMAGE
+WORKDIR /workspace
+
+# Install gcsfuse
+RUN export GCSFUSE_REPO=gcsfuse-`lsb_release -c -s` && \
+  echo "deb https://packages.cloud.google.com/apt $GCSFUSE_REPO main" | tee /etc/apt/sources.list.d/gcsfuse.list && \
+  curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+  apt-get update && \
+  apt-get install -y gcsfuse \
+  && apt-get install -y rsync \
+  && apt-get install -y  lsof
+
+# Install Google Cloud CLI
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+  curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - && \
+  apt-get update && apt-get install -y google-cloud-cli
+
+# gcloud storage key
+RUN mkdir /workspace/.gcloud_key
+COPY storage_key.json /workspace/.gcloud_key/storage_key.json
+RUN chmod 600 /workspace/.gcloud_key/storage_key.json
+
+# Authenticate gcloud
+RUN gcloud auth activate-service-account --key-file=/workspace/.gcloud_key/storage_key.json
+
+# Install the TPU and Pallas dependencies.
+RUN python3 -m pip install torch_xla[tpu] -f https://storage.googleapis.com/libtpu-releases/index.html
+RUN python3 -m pip install torch_xla[pallas] -f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -f https://storage.googleapis.com/jax-releases/jaxlib_nightly_releases.html
+
+# Build vLLM.
+COPY . /workspace/vllm
+ENV VLLM_TARGET_DEVICE="tpu"
+RUN cd /workspace/vllm && python3 -m pip install -r requirements-tpu.txt
+RUN cd /workspace/vllm && python3 setup.py develop
+
+ENV VLLM_USAGE_SOURCE production-docker-image
+ENV MODEL_PATH=""
+ENV HF_PATH=""
+ENV CLOUD_STORAGE_BUCKET="felafax-storage-eu"
+
+COPY setup.sh /workspace/setup.sh
+RUN chmod +x /workspace/setup.sh
+
+ENTRYPOINT ["/workspace/setup.sh"]
+# CMD ["/bin/bash"]
+# ENTRYPOINT ["python3", "-m", "vllm.entrypoints.openai.api_server"]
