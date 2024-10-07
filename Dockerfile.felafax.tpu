@@ -37,13 +37,10 @@ RUN cd /workspace/vllm && python3 -m pip install -r requirements-tpu.txt
 RUN cd /workspace/vllm && python3 setup.py develop
 
 ENV VLLM_USAGE_SOURCE production-docker-image
-ENV MODEL_PATH=""
+ENV GCS_MODEL_PATH=""
 ENV HF_PATH=""
-ENV CLOUD_STORAGE_BUCKET="felafax-storage-eu"
 
 COPY setup.sh /workspace/setup.sh
 RUN chmod +x /workspace/setup.sh
 
 ENTRYPOINT ["/workspace/setup.sh"]
-# CMD ["/bin/bash"]
-# ENTRYPOINT ["python3", "-m", "vllm.entrypoints.openai.api_server"]
