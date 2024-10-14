@@ -10,4 +10,5 @@ elif [ -n "$HF_PATH" ]; then
 fi
 
 echo "vllm serve... {model: $MODEL}"
-exec vllm serve $MODEL --dtype auto
+# exec vllm serve $MODEL --dtype auto
+exec vllm serve $MODEL --tokenizer "/mnt/persistent-disk/model" --enforce-eager
