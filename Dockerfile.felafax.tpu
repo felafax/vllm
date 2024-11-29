@@ -1,4 +1,4 @@
-ARG NIGHTLY_DATE="20240808"
+ARG NIGHTLY_DATE="20241017"
 ARG BASE_IMAGE="us-central1-docker.pkg.dev/tpu-pytorch-releases/docker/xla:nightly_3.10_tpuvm_$NIGHTLY_DATE"
 
 FROM $BASE_IMAGE
@@ -27,8 +27,8 @@ RUN chmod 600 /workspace/.gcloud_key/storage_key.json
 RUN gcloud auth activate-service-account --key-file=/workspace/.gcloud_key/storage_key.json
 
 # Install the TPU and Pallas dependencies.
-RUN python3 -m pip install torch_xla[tpu] -f https://storage.googleapis.com/libtpu-releases/index.html
-RUN python3 -m pip install torch_xla[pallas] -f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -f https://storage.googleapis.com/jax-releases/jaxlib_nightly_releases.html
+# RUN python3 -m pip install torch_xla[tpu] -f https://storage.googleapis.com/libtpu-releases/index.html
+# RUN python3 -m pip install torch_xla[pallas] -f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -f https://storage.googleapis.com/jax-releases/jaxlib_nightly_releases.html
 
 # Build vLLM.
 COPY . /workspace/vllm
