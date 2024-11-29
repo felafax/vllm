@@ -37,10 +37,13 @@ RUN cd /workspace/vllm && python3 -m pip install -r requirements-tpu.txt
 RUN cd /workspace/vllm && python3 setup.py develop
 
 ENV VLLM_USAGE_SOURCE production-docker-image
-ENV GCS_MODEL_PATH=""
-ENV HF_PATH=""
+# ENV GCS_MODEL_PATH=""
+# ENV HF_PATH=""
+ENV SCRIPT_NAME=
+ENV CONFIG={}
 
-COPY setup.sh /workspace/setup.sh
-RUN chmod +x /workspace/setup.sh
 
-ENTRYPOINT ["/workspace/setup.sh"]
+COPY startup_new.sh /workspace/startup_new.sh
+RUN chmod +x /workspace/startup_new.sh
+
+ENTRYPOINT ["/workspace/startup_new.sh"]
